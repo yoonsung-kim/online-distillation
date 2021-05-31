@@ -117,7 +117,7 @@ def train(model,
             print(f'avg ett: {elapsed_time / float(epochs + 1)} seconds')
 
             with open(f'{output_file_path}.txt', 'w') as f:
-                f.write(f'{epoch + 1} {elapsed_time} {elapsed_time / float(epochs + 1)} {target_valid_accuracy} {best_accuracy}')
+                f.write(f'{epoch + 1} {elapsed_time} {elapsed_time / float(epoch + 1)} {target_valid_accuracy} {best_accuracy}')
             break
 
 
@@ -164,8 +164,20 @@ if __name__ == '__main__':
           learning_rate=lr,
           input_shape=[batch_size, 3, input_width, input_height],
           use_nimble=True,
+          output_file_path='multi_reset18_2_nimble.txt')
+
+    train(model=MultiResNet18_2(),
+          loss_function=OnlineDistillationLoss(),
+          train_data_loader=train_data_loader,
+          valid_data_loader=test_data_loader,
+          target_valid_accuracy=target_valid_accuracy,
+          epochs=epochs,
+          learning_rate=lr,
+          input_shape=[batch_size, 3, input_width, input_height],
+          use_nimble=False,
           output_file_path='multi_reset18_2.txt')
 
+    '''
     train(model=MultiResNet18_4(),
           loss_function=OnlineDistillationLoss(),
           train_data_loader=train_data_loader,
@@ -197,3 +209,4 @@ if __name__ == '__main__':
           input_shape=[batch_size, 3, input_width, input_height],
           use_nimble=True,
           output_file_path='single_reset18.txt')
+    '''
