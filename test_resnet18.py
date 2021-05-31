@@ -5,6 +5,7 @@ from torch import nn, optim
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 from utils import OnlineDistillationLoss
+import numpy as np
 
 
 def train(model,
@@ -13,13 +14,24 @@ def train(model,
           valid_data_loader,
           target_valid_accuracy,
           epochs,
-          learning_rate):
+          learning_rate,
+          input_shape,
+          use_nimble,
+          output_file_path):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     print(f'device {device}')
 
     cnt_model = model.count
+    print(f'model count: {cnt_model}')
     model = model.to(device)
     optimizer = optim.SGD(model.parameters(), lr=learning_rate)
+
+    #
+    if use_nimble:
+        dummy_input = torch.randn(input_shape).cuda()
+        model = torch.cuda.Nimble(model)
+        model.prepare(dummy_input, training=True)
+    #
 
     train_losses = 0.0
     cnt_train_data = len(train_data_loader)
@@ -100,10 +112,12 @@ def train(model,
             print(f'achieved best valid accuracy: {best_accuracy}%')
             print(f'executed epochs: {epoch}')
             elapsed_time = (end - start) / 1000_000_000.0
-            print(f'elapsed training time {elapsed_time} seconds')
+            print(f'ett (elapsed training time)')
+            print(f'total ett: {elapsed_time} seconds')
+            print(f'avg ett: {elapsed_time / float(epochs + 1)} seconds')
 
-            with open(f'{type(model).__name__}.txt', 'w') as f:
-                f.write(f'{epoch + 1} {elapsed_time} {target_valid_accuracy} {best_accuracy}')
+            with open(f'{output_file_path}.txt', 'w') as f:
+                f.write(f'{epoch + 1} {elapsed_time} {elapsed_time / float(epochs + 1)} {target_valid_accuracy} {best_accuracy}')
             break
 
 
@@ -111,8 +125,11 @@ if __name__ == '__main__':
     data_root = './data/cifar-10'
     batch_size = 1
 
+    input_width = 224
+    input_height = input_width
+
     data_transforms = transforms.Compose([
-        transforms.Resize((224, 224)),
+        transforms.Resize((input_width, input_height)),
         transforms.ToTensor(),
         transforms.Normalize(mean=(0.4914, 0.4822, 0.4465),
                              std=(0.2023, 0.1994, 0.2010))
@@ -144,7 +161,10 @@ if __name__ == '__main__':
           valid_data_loader=test_data_loader,
           target_valid_accuracy=target_valid_accuracy,
           epochs=epochs,
-          learning_rate=lr)
+          learning_rate=lr,
+          input_shape=[batch_size, 3, input_width, input_height],
+          use_nimble=True,
+          output_file_path='multi_reset18_2.txt')
 
     train(model=MultiResNet18_4(),
           loss_function=OnlineDistillationLoss(),
@@ -152,7 +172,9 @@ if __name__ == '__main__':
           valid_data_loader=test_data_loader,
           target_valid_accuracy=target_valid_accuracy,
           epochs=epochs,
-          learning_rate=lr)
+          learning_rate=lr,input_shape=[batch_size, 3, input_width, input_height],
+          use_nimble=True,
+          output_file_path='multi_reset18_4.txt')
 
     train(model=MultiResNet18_8(),
           loss_function=OnlineDistillationLoss(),
@@ -160,7 +182,10 @@ if __name__ == '__main__':
           valid_data_loader=test_data_loader,
           target_valid_accuracy=target_valid_accuracy,
           epochs=epochs,
-          learning_rate=lr)
+          learning_rate=lr,
+          input_shape=[batch_size, 3, input_width, input_height],
+          use_nimble=True,
+          output_file_path='multi_reset18_8.txt')
 
     train(model=SingleResNet18(),
           loss_function=nn.CrossEntropyLoss(),
@@ -168,6 +193,7 @@ if __name__ == '__main__':
           valid_data_loader=test_data_loader,
           target_valid_accuracy=target_valid_accuracy,
           epochs=epochs,
-          learning_rate=lr)
-
-
+          learning_rate=lr,
+          input_shape=[batch_size, 3, input_width, input_height],
+          use_nimble=True,
+          output_file_path='single_reset18.txt')

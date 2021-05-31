@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 
 
@@ -67,9 +68,11 @@ class MultiModel_2(nn.Module):
         self.model_1 = SingleModel()
 
     def forward(self, x):
-        outputs = [self.model_0(x), self.model_1(x)]
+        outputs = [self.model_0(x),
+                   self.model_1(x)]
 
-        return outputs
+        #return outputs
+        return torch.stack(outputs, dim=0)
 
 
 class MultiModel_4(nn.Module):
@@ -88,7 +91,7 @@ class MultiModel_4(nn.Module):
                    self.model_2(x),
                    self.model_3(x)]
 
-        return outputs
+        return torch.stack(outputs, dim=0)
 
 
 class MultiModel_8(nn.Module):
@@ -115,4 +118,4 @@ class MultiModel_8(nn.Module):
                    self.model_6(x),
                    self.model_7(x)]
 
-        return outputs
+        return torch.stack(outputs, dim=0)
