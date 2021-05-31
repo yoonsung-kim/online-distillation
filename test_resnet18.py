@@ -116,7 +116,7 @@ def train(model,
             print(f'total ett: {elapsed_time} seconds')
             print(f'avg ett: {elapsed_time / float(epochs + 1)} seconds')
 
-            with open(f'{output_file_path}.txt', 'w') as f:
+            with open(f'{output_file_path}', 'w') as f:
                 f.write(f'{epoch + 1} {elapsed_time} {elapsed_time / float(epoch + 1)} {target_valid_accuracy} {best_accuracy}')
             break
 
