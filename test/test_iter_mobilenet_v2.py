@@ -89,10 +89,14 @@ class MultiMobileNetV2_4(nn.Module):
 if __name__ == '__main__':
     batch_size = 32
     input_shape = (batch_size, 3, 224, 224)
-    model = MultiMobileNetV2_2()
+
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    use_cuda = True if torch.cuda.is_available() else False
+
+    model = MultiMobileNetV2_2().to(device)
     loss_fn = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=0.01)
 
     model.train()
-    dummy_input = torch.randn(input_shape)
+    dummy_input = torch.randn(input_shape).to(device)
     output = model(dummy_input)
