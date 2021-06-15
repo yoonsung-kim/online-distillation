@@ -40,6 +40,108 @@ class OnlineDistillationLoss(torch.nn.Module):
         return loss
 
 
+class SingleModel(nn.Module):
+    def __init__(self):
+        super(SingleModel, self).__init__()
+        self.count = 1
+        # conv 0
+        self.conv2d_0 = nn.Conv2d(in_channels=3,
+                                  out_channels=32,
+                                  kernel_size=5,
+                                  stride=1,
+                                  padding=2)
+        self.relu_0 = nn.ReLU()
+        self.max_pool2d_0 = nn.MaxPool2d(kernel_size=2,
+                                         stride=2)
+        self.batch_norm_0 = nn.BatchNorm2d(32)
+
+        # conv 1
+        self.conv2d_1 = nn.Conv2d(in_channels=32,
+                                  out_channels=64,
+                                  kernel_size=5,
+                                  stride=1,
+                                  padding=2)
+        self.relu_1 = nn.ReLU()
+        self.max_pool2d_1 = nn.MaxPool2d(kernel_size=2,
+                                         stride=2)
+        self.batch_norm_1 = nn.BatchNorm2d(64)
+
+        self.flatten = nn.Flatten()
+
+        self.fc_0 = nn.Linear(8 * 8 * 64, 500)
+        self.relu_2 = nn.ReLU()
+
+        self.fc_1 = nn.Linear(500, 10)
+
+        self.softmax = nn.Softmax(dim=1)
+
+    def forward(self, x):
+        output = self.conv2d_0(x)
+        output = self.relu_0(output)
+        output = self.max_pool2d_0(output)
+        output = self.batch_norm_0(output)
+
+        output = self.conv2d_1(output)
+        output = self.relu_1(output)
+        output = self.max_pool2d_1(output)
+        output = self.batch_norm_1(output)
+
+        output = self.flatten(output)
+
+        output = self.fc_0(output)
+        output = self.relu_2(output)
+        output = self.fc_1(output)
+
+        output = self.softmax(output)
+
+        return output
+
+
+class MultiModel_2(nn.Module):
+    def __init__(self):
+        super(MultiModel_2, self).__init__()
+
+        self.count = 2
+        self.model_0 = SingleModel()
+        self.model_1 = SingleModel()
+
+    def forward(self, x):
+        outputs = [self.model_0(x),
+                   self.model_1(x)]
+
+        #return outputs
+        return torch.stack(outputs, dim=0)
+
+
+class SingleResNet18(nn.Module):
+    def __init__(self):
+        super(SingleResNet18, self).__init__()
+        self.count = 1
+
+        resnet = models.resnet18()
+        resnet.fc = nn.Linear(512, 10)
+
+        self.model = nn.Sequential(resnet, nn.Softmax(dim=1))
+
+    def forward(self, x):
+        output = self.model(x)
+
+        return output
+
+
+class MultiResNet18_2(nn.Module):
+    def __init__(self):
+        super(MultiResNet18_2, self).__init__()
+
+        self.count = 2
+        self.model_0 = SingleResNet18()
+        self.model_1 = SingleResNet18()
+
+    def forward(self, x):
+        outputs = [self.model_0(x), self.model_1(x)]
+
+        return torch.stack(outputs, dim=0)
+
 class SingleMobileNetV2(nn.Module):
     def __init__(self):
         super(SingleMobileNetV2, self).__init__()
@@ -87,16 +189,22 @@ class MultiMobileNetV2_4(nn.Module):
 
 
 if __name__ == '__main__':
-    batch_size = 32
+    batch_size = 1
+    #input_shape = (batch_size, 3, 224, 224)
     input_shape = (batch_size, 3, 224, 224)
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    use_cuda = True if torch.cuda.is_available() else False
 
     model = MultiMobileNetV2_2().to(device)
+    model.train()
     loss_fn = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=0.01)
 
-    model.train()
-    dummy_input = torch.randn(input_shape).to(device)
-    output = model(dummy_input)
+    if True:
+        dummy_input = torch.randn(input_shape).cuda()
+        model = torch.cuda.Nimble(model)
+        model.prepare(dummy_input, training=True)
+
+    for i in range(1):
+        dummy_input = torch.randn(input_shape).to(device)
+        output = model(dummy_input)
