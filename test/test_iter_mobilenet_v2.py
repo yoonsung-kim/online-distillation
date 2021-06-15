@@ -188,6 +188,33 @@ class MultiMobileNetV2_4(nn.Module):
         return torch.stack(outputs, dim=0)
 
 
+class SingleResNet50(nn.Module):
+    def __init__(self):
+        super(SingleResNet50, self).__init__()
+        self.count = 1
+
+        self.model = models.resnet50()
+
+    def forward(self, x):
+        output = self.model(x)
+
+        return output
+
+
+class MultiResNet50_2(nn.Module):
+    def __init__(self):
+        super(MultiResNet50_2, self).__init__()
+
+        self.count = 2
+        self.model_0 = SingleResNet50()
+        self.model_1 = SingleResNet50()
+
+    def forward(self, x):
+        outputs = [self.model_0(x), self.model_1(x)]
+
+        return torch.stack(outputs, dim=0)
+
+
 if __name__ == '__main__':
     batch_size = 1
     #input_shape = (batch_size, 3, 224, 224)
