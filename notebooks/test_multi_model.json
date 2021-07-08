@@ -1,0 +1,1 @@
+{"elapsed_time": {"unit": "millisecond", "forward": 0.587684, "loss_calculation": 0.535066, "backward": 0.851869, "set_gradients_zero": 8.408229, "update_weights": 26.414687}}

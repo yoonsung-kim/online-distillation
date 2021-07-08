@@ -1,5 +1,6 @@
 import torch
 
+
 class OnlineDistillationLoss(torch.nn.Module):
     def __init__(self):
         super(OnlineDistillationLoss, self).__init__()
@@ -36,4 +37,4 @@ class OnlineDistillationLoss(torch.nn.Module):
         for i in range(2, cnt_outputs):
             loss += losses[i]
 
-        return loss
+        return loss / cnt_outputs
