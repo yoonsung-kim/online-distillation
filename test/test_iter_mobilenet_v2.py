@@ -1,3 +1,4 @@
+import os
 import time
 
 import torch
@@ -224,14 +225,14 @@ if __name__ == '__main__':
 
     model = MultiMobileNetV2_2().to(device)
     model.train()
-    loss_fn = nn.CrossEntropyLoss()
+    loss_fn = OnlineDistillationLoss()
     optimizer = optim.SGD(model.parameters(), lr=0.01)
 
     if True:
-        dummy_input = torch.randn(input_shape).cuda()
+        dummy_input = torch.zeros(input_shape).to(device)
         model = torch.cuda.Nimble(model)
         model.prepare(dummy_input, training=True)
 
     for i in range(1):
         dummy_input = torch.randn(input_shape).to(device)
-        output = model(dummy_input)
+        outputs = model(dummy_input)

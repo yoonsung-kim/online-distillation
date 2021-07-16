@@ -1,2 +1,2 @@
 from .models import customs
-from utils import OnlineDistillationLoss
+from ..utils import losses
