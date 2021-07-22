@@ -1,1 +1,2 @@
 ncu-reports/**/* filter=lfs diff=lfs merge=lfs -text
+bs-batch-16-alexnet-trace.json filter=lfs diff=lfs merge=lfs -text
