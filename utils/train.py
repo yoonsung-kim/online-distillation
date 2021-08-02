@@ -8,6 +8,99 @@ import numpy as np
 from utils.losses import *
 
 
+def test_batch_size_train(config):
+    device = config['device']
+    print(f'device {device}')
+
+    model = config['model']
+
+    # instances for backpropagation & updating weights
+    optimizer = config['optimizer']
+    loss_function = config['loss_function']
+
+    print(f'test one iteration...')
+
+    million = 1000_000.0
+
+    dict = {
+        'elapsed_time': {
+            'unit': 'millisecond',
+            'batch_sizes': [],
+            'forward': [],
+            'loss_calculation': [],
+            'backward': [],
+            'set_gradients_zero': [],
+            'update_weights': [],
+            'iteration_sum': []
+        }
+    }
+
+    elapsed_time = dict['elapsed_time']
+
+    batchs = config['batch-sizes']
+    iters = config['iterations']
+    input_shape_chw = config['input-shape-chw']
+
+    for batch in batchs:
+        elapsed_time['batch_sizes'].append(batch)
+
+        forward = 0.0
+        loss_calculation = 0.0
+        set_gradients_zero = 0.0
+        backward = 0.0
+        update_weights = 0.0
+
+        for i in range(iters):
+            input_data = torch.randn((batch,) + input_shape_chw).to(device)
+            target = torch.randint(high=1, size=(batch, 1)).to(device)
+
+            start = time.time_ns()
+            outputs = model(input_data)
+            end = time.time_ns()
+            forward += (end - start)
+
+            start = time.time_ns()
+            loss = loss_function(outputs, target)
+            end = time.time_ns()
+            loss_calculation += (end - start)
+
+            start = time.time_ns()
+            optimizer.zero_grad()
+            end = time.time_ns()
+            set_gradients_zero += (end - start)
+
+            start = time.time_ns()
+            loss.backward()
+            end = time.time_ns()
+            backward += (end - start)
+
+            start = time.time_ns()
+            optimizer.step()
+            end = time.time_ns()
+            update_weights += (end - start)
+
+        iteration_sum = forward + loss_calculation + set_gradients_zero + backward + update_weights
+
+        forward /= (iters * million)
+        loss_calculation /= (iters * million)
+        set_gradients_zero /= (iters * million)
+        backward /= (iters * million)
+        update_weights /= (iters * million)
+        iteration_sum /= (iters * million)
+
+        elapsed_time['forward'].append(forward)
+        elapsed_time['loss_calculation'].append(loss_calculation)
+        elapsed_time['set_gradients_zero'].append(set_gradients_zero)
+        elapsed_time['backward'].append(backward)
+        elapsed_time['update_weights'].append(update_weights)
+        elapsed_time['iteration_sum'].append(iteration_sum)
+
+    print(f'stop training')
+
+    with open(f'{config["output_file_path"]}', 'w', encoding='utf-8') as f:
+        json.dump(dict, f, ensure_ascii=False)
+
+
 def test_train(config):
     #device = 'cuda' if torch.cuda.is_available() else 'cpu'
     device = config['device']
