@@ -5,7 +5,67 @@ import torch
 
 import numpy as np
 
+from tqdm import tqdm
+
 from utils.losses import *
+
+def test_preprocess_overhead(config):
+    device = config['device']
+    print(f'device {device}')
+
+    model = config['model']
+
+    train_data_loader = config['train_data_loader']
+
+    # instances for backpropagation & updating weights
+    optimizer = config['optimizer']
+    loss_function = config['loss_function']
+
+    train_data_iter = iter(train_data_loader)
+
+    iterations = config["iterations"]
+
+    million = 1000_000.0
+
+    results = {
+        "model-name": config["model_name"],
+        "iterations": config["iterations"],
+        "batch-size": config["batch_size"],
+        "ett": {
+            "unit": "millisecond",
+            "batch-load": [],
+            "data-copy-to-gpu": [],
+            "train": [],
+        }
+    }
+
+    for _ in tqdm(range(iterations)):
+        batch_load_start = time.time_ns()
+        inputs, targets = next(train_data_iter)
+        batch_load_end = time.time_ns()
+        batch_load_ett = (batch_load_end - batch_load_start) / million
+
+        data_cpy_to_gpu_start = time.time_ns()
+        inputs = inputs.to(device)
+        targets = targets.to(device)
+        data_cpy_to_gpu_end = time.time_ns()
+        data_cpy_to_gpu_ett = (data_cpy_to_gpu_end - data_cpy_to_gpu_start) / million
+
+        train_start = time.time_ns()
+        outputs = model(inputs)
+        loss = loss_function(outputs, targets)
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+        train_end = time.time_ns()
+        train_ett = (train_end - train_start) / million
+
+        results["ett"]["batch-load"].append(batch_load_ett)
+        results["ett"]["data-copy-to-gpu"].append(data_cpy_to_gpu_ett)
+        results["ett"]["train"].append(train_ett)
+
+    with open(f'{config["output_file_path"]}', 'w', encoding='utf-8') as f:
+        json.dump(results, f, ensure_ascii=False)
 
 
 def test_batch_size_train(config):
