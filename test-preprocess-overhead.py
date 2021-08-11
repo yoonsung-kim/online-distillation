@@ -5,41 +5,43 @@ from torch.utils.data import DataLoader
 from torchvision import datasets, transforms, models
 from utils.train import test_preprocess_overhead
 import numpy as np
+from torchvision.datasets import ImageFolder
+from torchvision import transforms
 
 # configurations
-batch_size = 64
 input_channels = 3
-input_width = 224
-input_height = input_width
-iterations = 256
-
+input_height = 224
+input_width = input_height
+image_size = (input_height, input_width)
 lr = 0.01
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-data_root = './data/cifar-10'
+iterations = 64
+batch_size = 8
+num_workers = 32
 
-data_transforms = transforms.Compose([
-    transforms.Resize((input_width, input_height)),
-    transforms.ToTensor(),
-    #transforms.Normalize(mean=(0.4914, 0.4822, 0.4465),
-    #                     std=(0.2023, 0.1994, 0.2010))
-])
+device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
-train_data = datasets.CIFAR10(root=data_root,
-                              train=True,
-                              transform=data_transforms,
-                              download=True)
-train_data_loader = DataLoader(train_data,
-                               batch_size=batch_size,
-                               shuffle=True,
-                               num_workers=16)
+transform = transforms.Compose([
+        transforms.Resize(image_size),
+        transforms.ToTensor(),
+        transforms.RandomVerticalFlip(),
+        transforms.RandomRotation([-180, 180]),
+        transforms.Normalize(mean=(0.485, 0.456, 0.406),
+                             std=(0.229, 0.224, 0.225)),
+    ])
 
-model = models.alexnet().to(device)
+dataset = ImageFolder(root="/data/imagenet/train", transform=transform)
+dataloader = torch.utils.data.DataLoader(dataset, 
+                                         batch_size=batch_size,
+                                         shuffle=True,
+                                         num_workers=num_workers)
+
+model = models.vgg16().to(device)
 
 optimizer = optim.SGD(model.parameters(), lr=lr)
 loss_function = torch.nn.CrossEntropyLoss()
 
-model_name = "alexnet"
+model_name = "vgg16"
 
 config = {
     'device': device,
@@ -50,8 +52,9 @@ config = {
     "batch_size": batch_size,
     "iterations": iterations,
     "optimizer": optimizer,
-    "train_data_loader": train_data_loader,
-    "output_file_path": f"preproc-analysis-{model_name}-batch-{batch_size}"
+    "train_data_loader": dataloader,
+    "output_file_path": f"preproc-analysis-{model_name}-batch-{batch_size}.json"
 }
 
 test_preprocess_overhead(config)
+print(f"saved json output: {config['output_file_path']}")
