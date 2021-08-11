@@ -55,7 +55,8 @@ def test_inference(config):
     start = time.time_ns()
     with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], record_shapes=True) as prof:
         with record_function('infernce'):
-            outputs = model(input_data)
+            for i in range(1):
+                outputs = model(input_data)
     end = time.time_ns()
     elapsed_time['inference'] = (end - start) / million
 

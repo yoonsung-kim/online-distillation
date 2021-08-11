@@ -36,10 +36,13 @@ def test_preprocess_overhead(config):
             "batch-load": [],
             "data-copy-to-gpu": [],
             "train": [],
+            "total": [],
         }
     }
-
-    for _ in tqdm(range(iterations)):
+    
+    
+    for _ in range(iterations):
+    #for _ in tqdm(range(iterations)):
         batch_load_start = time.time_ns()
         inputs, targets = next(train_data_iter)
         batch_load_end = time.time_ns()
@@ -63,6 +66,7 @@ def test_preprocess_overhead(config):
         results["ett"]["batch-load"].append(batch_load_ett)
         results["ett"]["data-copy-to-gpu"].append(data_cpy_to_gpu_ett)
         results["ett"]["train"].append(train_ett)
+        results["ett"]["total"].append(batch_load_ett + data_cpy_to_gpu_ett + train_ett)
 
     with open(f'{config["output_file_path"]}', 'w', encoding='utf-8') as f:
         json.dump(results, f, ensure_ascii=False)
