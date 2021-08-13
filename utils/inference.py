@@ -8,6 +8,72 @@ import numpy as np
 
 from utils.losses import *
 
+from tqdm import tqdm
+
+
+def test_preprocess_overhead_infer(config):
+    device = config['device']
+    print(f'device {device}')
+
+    model = config['model']
+
+    data_loader = config['data_loader']
+
+    data_iter = iter(data_loader)
+
+    iterations = config["iterations"]
+
+    million = 1000_000.0
+
+    results = {
+        "model-name": config["model_name"],
+        "iterations": config["iterations"],
+        "batch-size": config["batch_size"],
+        "ett": {
+            "unit": "millisecond",
+            "batch-load": [],
+            "data-copy-to-gpu": [],
+            "infer": [],
+            "total": [],
+        }
+    }
+    
+    loss_function = config["loss_function"]
+    
+    model.eval()
+    with torch.no_grad():
+        for _ in tqdm(range(iterations)):
+            #batch_load_start = time.time_ns()
+            inputs, targets = next(data_iter)
+            #batch_load_end = time.time_ns()
+            #batch_load_ett = (batch_load_end - batch_load_start) / million
+
+            #data_cpy_to_gpu_start = time.time_ns()
+            inputs = inputs.to(device)
+            targets = targets.to(device)
+            #data_cpy_to_gpu_end = time.time_ns()
+            #data_cpy_to_gpu_ett = (data_cpy_to_gpu_end - data_cpy_to_gpu_start) / million
+
+            #train_start = time.time_ns()
+            outputs = model(inputs)
+            loss = loss_function(outputs, targets)
+            #optimizer.zero_grad()
+            #loss.backward()
+            #optimizer.step()
+            #train_end = time.time_ns()
+            #train_ett = (train_end - train_start) / million
+
+        #    results["ett"]["batch-load"].append(batch_load_ett)
+        #    results["ett"]["data-copy-to-gpu"].append(data_cpy_to_gpu_ett)
+        #    results["ett"]["train"].append(train_ett)
+        #    results["ett"]["total"].append(batch_load_ett + data_cpy_to_gpu_ett + train_ett)
+
+        #with open(f'{config["output_file_path"]}', 'w', encoding='utf-8') as f:
+        #    json.dump(results, f, ensure_ascii=False)
+        
+    model.train()
+
+
 
 def test_inference(config):
     #device = 'cuda' if torch.cuda.is_available() else 'cpu'

@@ -41,8 +41,8 @@ def test_preprocess_overhead(config):
     }
     
     
-    for _ in range(iterations):
-    #for _ in tqdm(range(iterations)):
+    #for _ in range(iterations):
+    for _ in tqdm(range(iterations)):
         batch_load_start = time.time_ns()
         inputs, targets = next(train_data_iter)
         batch_load_end = time.time_ns()
